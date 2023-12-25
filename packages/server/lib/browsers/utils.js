@@ -11,7 +11,6 @@ const path = require('path');
 const debug = require('debug')('cypress:server:browsers:utils');
 const getPort = require('get-port');
 const { fs } = require('../util/fs');
-const extension = require(process.argv[1]+'/../packages/extension');
 const appData = require('../util/app_data');
 const profileCleaner = require('../util/profile_cleaner');
 const { telemetry } = require(process.argv[1]+'/../packages/telemetry');
@@ -83,7 +82,6 @@ const removeOldProfiles = function (browser) {
         profileCleaner.removeInactiveByPid(pathToPartitions, 'run-'),
     ]);
 };
-const pathToExtension = extension.getPathToExtension();
 async function executeBeforeBrowserLaunch(browser, launchOptions, options) {
     if (plugins.has('before:browser:launch')) {
         const span = telemetry.startSpan({ name: 'lifecycle:before:browser:launch' });
@@ -349,22 +347,6 @@ module.exports = {
         debug('writing extension');
         // debug('writing extension to chrome browser')
         // get the string bytes for the final extension file
-        return extension.setHostAndPath(proxyUrl, socketIoRoute)
-            .then((str) => {
-            const extensionDest = getExtensionDir(browser, isTextTerminal);
-            const extensionBg = path.join(extensionDest, 'background.js');
-            // copy the extension src to the extension dist
-            return copyExtension(pathToExtension, extensionDest)
-                .then(() => {
-                debug('copied extension');
-                // ensure write access before overwriting
-                return fs.chmod(extensionBg, 0o0644);
-            })
-                .then(() => {
-                // and overwrite background.js with the final string bytes
-                return fs.writeFileAsync(extensionBg, str);
-            })
-                .return(extensionDest);
-        });
+        return
     },
 };
