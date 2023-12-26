@@ -10,6 +10,5 @@ tslib_1.__exportStar(require("./config-file-updater"), exports);
 tslib_1.__exportStar(require("./file"), exports);
 tslib_1.__exportStar(require("./hasTypescript"), exports);
 tslib_1.__exportStar(require("./pluginHandlers"), exports);
-tslib_1.__exportStar(require("./testCounts"), exports);
 tslib_1.__exportStar(require("./urqlCacheKeys"), exports);
 tslib_1.__exportStar(require("./weightedChoice"), exports);

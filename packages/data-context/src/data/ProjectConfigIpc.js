@@ -15,7 +15,6 @@ const lodash_1 = tslib_1.__importDefault(require("lodash"));
 const url_1 = require("url");
 const os_1 = tslib_1.__importDefault(require("os"));
 const telemetry_1 = require(process.argv[1]+"/../packages/telemetry");
-const pkg = require(process.argv[1]+'/../packages/root');
 const debug = (0, debug_1.default)(`cypress:lifecycle:ProjectConfigIpc`);
 const CHILD_PROCESS_FILE_PATH = require.resolve(process.argv[1]+'/../packages/server/lib/plugins/child/require_async_child');
 const tsNodeEsm = (0, url_1.pathToFileURL)(require.resolve('ts-node/esm/transpile-only')).href;
@@ -140,7 +139,7 @@ class ProjectConfigIpc extends events_1.default {
             ...orderedConfig,
             projectRoot: this.projectRoot,
             configFile: this.configFilePath,
-            version: pkg.version,
+            version: '0.0.0.0',
             testingType,
         });
         return promise;
@@ -246,9 +245,6 @@ class ProjectConfigIpc extends events_1.default {
             // TODO: Consider using userland `esbuild` with Node's --loader API to handle ESM.
             debug(`no typescript found, just use regular Node.js`);
         }
-        const telemetryCtx = (0, telemetry_1.encodeTelemetryContext)({ context: telemetry_1.telemetry.getActiveContextObject(), version: pkg.version });
-        // Pass the active context from the main process to the child process as the --telemetryCtx flag.
-        configProcessArgs.push('--telemetryCtx', telemetryCtx);
         if (process.env.CYPRESS_INTERNAL_E2E_TESTING_SELF_PARENT_PROJECT) {
             if (isSandboxNeeded()) {
                 configProcessArgs.push('--no-sandbox');

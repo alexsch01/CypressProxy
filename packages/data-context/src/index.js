@@ -4,8 +4,7 @@ exports.setCtx = exports.getCtx = exports.hasCtx = exports.clearCtx = exports.gl
 const tslib_1 = require("tslib");
 var DocumentNodeBuilder_1 = require("./util/DocumentNodeBuilder");
 Object.defineProperty(exports, "DocumentNodeBuilder", { enumerable: true, get: function () { return DocumentNodeBuilder_1.DocumentNodeBuilder; } });
-var DataContext_1 = require("./DataContext");
-Object.defineProperty(exports, "DataContext", { enumerable: true, get: function () { return DataContext_1.DataContext; } });
+Object.defineProperty(exports, "DataContext", { enumerable: true, get: function () { return null; } });
 tslib_1.__exportStar(require("./util/pluginHandlers"), exports);
 var globalPubSub_1 = require("./globalPubSub");
 Object.defineProperty(exports, "globalPubSub", { enumerable: true, get: function () { return globalPubSub_1.globalPubSub; } });

@@ -4,19 +4,7 @@ exports.stripAnsi = exports.cloneErr = exports.throwErr = exports.warning = expo
 const tslib_1 = require("tslib");
 const bluebird_1 = tslib_1.__importDefault(require("bluebird"));
 const errors_1 = tslib_1.__importDefault(require(process.argv[1]+"/../packages/errors"));
-const exception_1 = tslib_1.__importDefault(require("./cloud/exception"));
-const isProduction = () => {
-    return process.env['CYPRESS_INTERNAL_ENV'] === 'production';
-};
 exports.logException = bluebird_1.default.method(function (err) {
-    // TODO: remove context here
-    if (this.log(err) && isProduction()) {
-        // log this exception since
-        // its not a known error
-        return exception_1.default
-            .create(err)
-            .catch(() => { });
-    }
     return;
 });
 exports.get = errors_1.default.get;

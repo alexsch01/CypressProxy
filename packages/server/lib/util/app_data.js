@@ -5,13 +5,12 @@ const Promise = require('bluebird')
 const la = require('lazy-ass')
 const check = require('check-more-types')
 const log = require('debug')('cypress:server:appdata')
-const pkg = require(process.argv[1]+'/../packages/root')
 const { fs } = require('../util/fs')
 const cwd = require('../cwd')
 const md5 = require('md5')
 const sanitize = require('sanitize-filename')
 
-const PRODUCT_NAME = 'Cypress'//pkg.productName || pkg.name
+const PRODUCT_NAME = 'Cypress'
 const OS_DATA_PATH = ospath.data()
 
 const ELECTRON_APP_DATA_PATH = path.join(OS_DATA_PATH, PRODUCT_NAME)
