@@ -11,7 +11,6 @@ const makeGraphQLServer_1 = require(process.argv[1]+"/../packages/graphql/src/ma
 const net_stubbing_1 = require(process.argv[1]+"/../packages/net-stubbing");
 const socketIo = tslib_1.__importStar(require(process.argv[1]+"/../packages/socket"));
 const cdp_socket_1 = require(process.argv[1]+"/../packages/socket/lib/cdp-socket");
-const firefox_util_1 = tslib_1.__importDefault(require("./browsers/firefox-util"));
 const errors = tslib_1.__importStar(require("./errors"));
 const fixture_1 = tslib_1.__importDefault(require("./fixture"));
 const class_helpers_1 = require("./util/class-helpers");
@@ -23,7 +22,6 @@ const cookies_1 = require("./util/cookies");
 const run_events_1 = tslib_1.__importDefault(require("./plugins/run_events"));
 const telemetry_1 = require(process.argv[1]+"/../packages/telemetry");
 const network_1 = require(process.argv[1]+"/../packages/network");
-const memory_1 = tslib_1.__importDefault(require("./browsers/memory"));
 const privileged_commands_manager_1 = require("./privileged-commands/privileged-commands-manager");
 const debug = (0, debug_1.default)('cypress:server:socket-base');
 const retry = (fn) => {
@@ -305,9 +303,9 @@ class SocketBase {
                             case 'reset:server:state':
                                 return options.onResetServerState();
                             case 'log:memory:pressure':
-                                return firefox_util_1.default.log();
+                                return
                             case 'firefox:force:gc':
-                                return firefox_util_1.default.collectGarbage();
+                                return
                             case 'get:fixture':
                                 return getFixture(args[0], args[1]);
                             case 'net':
@@ -341,11 +339,11 @@ class SocketBase {
                             case 'request:sent:with:credentials':
                                 return this.localBus.emit('request:sent:with:credentials', args[0]);
                             case 'start:memory:profiling':
-                                return memory_1.default.startProfiling(automation, args[0]);
+                                return
                             case 'end:memory:profiling':
-                                return memory_1.default.endProfiling();
+                                return
                             case 'check:memory:pressure':
-                                return memory_1.default.checkMemoryPressure({ ...args[0], automation });
+                                return
                             case 'protocol:test:before:run:async':
                                 return (_a = this._protocolManager) === null || _a === void 0 ? void 0 : _a.beforeTest(args[0]);
                             case 'protocol:test:before:after:run:async':
