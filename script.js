@@ -6,16 +6,7 @@ const SocketBase = require('./packages/server/lib/socket-base.js').SocketBase
 async function main() {
     const server = new ServerBase()
 
-    const [port, warning] = await server.open({clientRoute: '/__/'}, {
-      getCurrentBrowser: () => null,
-      getSpec: () => null,
-      exit: false,
-      onError: () => {},
-      onWarning: () => {},
-      shouldCorrelatePreRequests: () => false,
-      testingType: 'e2e',
-      SocketCtor: SocketBase,
-    })
+    const [port, warning] = await server.open({ clientRoute: '/__/' }, { SocketCtor: SocketBase })
 
     console.log(port)
 }
