@@ -11,7 +11,6 @@ const cwd_1 = tslib_1.__importDefault(require("./cwd"));
 const file_1 = tslib_1.__importDefault(require("./util/file"));
 const fs_1 = require("./util/fs");
 const types_1 = require(process.argv[1]+"/../packages/types");
-const data_context_1 = require(process.argv[1]+"/../packages/data-context");
 const debug = (0, debug_1.default)('cypress:server:saved_state');
 const stateFiles = {};
 const formStatePath = (projectRoot) => {
@@ -84,9 +83,6 @@ const create = (projectRoot, isTextTerminal = false) => {
         debug('making new state file around %s', fullStatePath);
         const stateFile = new file_1.default({
             path: fullStatePath,
-        });
-        data_context_1.globalPubSub.on('test:cleanup', () => {
-            stateFile.__resetForTest();
         });
         stateFile.set = lodash_1.default.wrap(stateFile.set.bind(stateFile), normalizeAndAllowSet);
         stateFiles[fullStatePath] = stateFile;

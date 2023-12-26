@@ -6,7 +6,6 @@ const bluebird_1 = tslib_1.__importDefault(require("bluebird"));
 const debug_1 = tslib_1.__importDefault(require("debug"));
 const events_1 = tslib_1.__importDefault(require("events"));
 const lodash_1 = tslib_1.__importDefault(require("lodash"));
-const data_context_1 = require(process.argv[1]+"/../packages/data-context");
 const net_stubbing_1 = require(process.argv[1]+"/../packages/net-stubbing");
 const socketIo = tslib_1.__importStar(require(process.argv[1]+"/../packages/socket"));
 const cdp_socket_1 = require(process.argv[1]+"/../packages/socket/lib/cdp-socket");
@@ -18,10 +17,8 @@ const file_opener_1 = require("./util/file-opener");
 const open_1 = tslib_1.__importDefault(require("./util/open"));
 const session = tslib_1.__importStar(require("./session"));
 const cookies_1 = require("./util/cookies");
-const run_events_1 = tslib_1.__importDefault(require("./plugins/run_events"));
 const telemetry_1 = require(process.argv[1]+"/../packages/telemetry");
 const network_1 = require(process.argv[1]+"/../packages/network");
-const privileged_commands_manager_1 = require("./privileged-commands/privileged-commands-manager");
 const debug = (0, debug_1.default)('cypress:server:socket-base');
 const retry = (fn) => {
     return bluebird_1.default.delay(25).then(fn);
@@ -146,7 +143,7 @@ class SocketBase {
                     debug(`socket-error ${err.message}`);
                 });
                 socket.on('automation:client:connected', () => {
-                    const connectedBrowser = (0, data_context_1.getCtx)().coreData.activeBrowser;
+                    const connectedBrowser = null;
                     if (automationClient === socket) {
                         return;
                     }
@@ -157,7 +154,7 @@ class SocketBase {
                     // if our automation disconnects then we're
                     // in trouble and should probably bomb everything
                     automationClient.on('disconnect', () => {
-                        const { activeBrowser } = (0, data_context_1.getCtx)().coreData;
+                        const { activeBrowser } = null;
                         // if we've stopped or if we've switched to another browser then don't do anything
                         if (this.ended || ((connectedBrowser === null || connectedBrowser === void 0 ? void 0 : connectedBrowser.path) !== (activeBrowser === null || activeBrowser === void 0 ? void 0 : activeBrowser.path))) {
                             return;
@@ -283,7 +280,7 @@ class SocketBase {
                 };
                 socket.on('backend:request', (eventName, ...args) => {
                     var _a;
-                    const userAgent = ((_a = socket.request) === null || _a === void 0 ? void 0 : _a.headers['user-agent']) || (0, data_context_1.getCtx)().coreData.app.browserUserAgent;
+                    const userAgent = ((_a = socket.request) === null || _a === void 0 ? void 0 : _a.headers['user-agent']) || null;
                     // cb is always the last argument
                     const cb = args.pop();
                     debug('backend:request %o', { eventName, args });
@@ -360,7 +357,7 @@ class SocketBase {
                             case 'protocol:page:loading':
                                 return (_h = this._protocolManager) === null || _h === void 0 ? void 0 : _h.pageLoading(args[0]);
                             case 'run:privileged':
-                                return privileged_commands_manager_1.privilegedCommandsManager.runPrivilegedCommand(config, args[0]);
+                                return
                             case 'telemetry':
                                 return (_j = telemetry_1.telemetry.exporter()) === null || _j === void 0 ? void 0 : _j.send(args[0], () => { }, (err) => {
                                     debug('error exporting telemetry data from browser %s', err);
@@ -440,19 +437,6 @@ class SocketBase {
                     socket.on('plugins:before:spec', (spec, cb) => {
                         const beforeSpecSpan = telemetry_1.telemetry.startSpan({ name: 'lifecycle:before:spec' });
                         beforeSpecSpan === null || beforeSpecSpan === void 0 ? void 0 : beforeSpecSpan.setAttributes({ spec });
-                        run_events_1.default.execute('before:spec', spec)
-                            .then(cb)
-                            .catch((error) => {
-                            if (this.inRunMode) {
-                                socket.disconnect();
-                                throw error;
-                            }
-                            // surfacing the error to the app in open mode
-                            cb({ error });
-                        })
-                            .finally(() => {
-                            beforeSpecSpan === null || beforeSpecSpan === void 0 ? void 0 : beforeSpecSpan.end();
-                        });
                     });
                 }
                 callbacks.onSocketConnection(socket);

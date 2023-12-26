@@ -10,7 +10,6 @@ const resolve_dist_1 = require(process.argv[1]+"/../packages/resolve-dist");
 const xhrs_1 = tslib_1.__importDefault(require("./controllers/xhrs"));
 const runner_1 = require("./controllers/runner");
 const iframes_1 = require("./controllers/iframes");
-const data_context_1 = require(process.argv[1]+"/../packages/data-context");
 const body_parser_1 = tslib_1.__importDefault(require("body-parser"));
 const path_1 = tslib_1.__importDefault(require("path"));
 const app_data_1 = tslib_1.__importDefault(require("./util/app_data"));
@@ -19,8 +18,6 @@ const spec_1 = tslib_1.__importDefault(require("./controllers/spec"));
 const reporter_1 = tslib_1.__importDefault(require("./controllers/reporter"));
 const client_1 = tslib_1.__importDefault(require("./controllers/client"));
 const files_1 = tslib_1.__importDefault(require("./controllers/files"));
-const plugins = tslib_1.__importStar(require("./plugins"));
-const privileged_commands_manager_1 = require("./privileged-commands/privileged-commands-manager");
 const debug = (0, debug_1.default)('cypress:server:routes');
 const createCommonRoutes = ({ config, networkProxy, testingType, getSpec, remoteStates, nodeProxy, onError, }) => {
     const router = (0, express_1.Router)();
@@ -34,8 +31,7 @@ const createCommonRoutes = ({ config, networkProxy, testingType, getSpec, remote
         try {
             const { file, fn, projectRoot } = req.body;
             debug('process origin callback: %s', fn);
-            const contents = await plugins.execute('_process:cross:origin:callback', { file, fn, projectRoot });
-            res.json({ contents });
+            res.json({ contents: '' });
         }
         catch (err) {
             const errorMessage = `Processing the origin callback errored:\n\n${err.stack}`;

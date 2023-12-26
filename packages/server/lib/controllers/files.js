@@ -3,9 +3,7 @@ const path = require('path')
 const cwd = require('../cwd')
 const debug = require('debug')('cypress:server:controllers')
 const { escapeFilenameInUrl } = require('../util/escape_filename')
-const { getCtx } = require(process.argv[1]+'/../packages/data-context')
 const { cors } = require(process.argv[1]+'/../packages/network')
-const { privilegedCommandsManager } = require('../privileged-commands/privileged-commands-manager')
 
 module.exports = {
 
@@ -32,19 +30,11 @@ module.exports = {
       remoteStates.getPrimary().domainName :
       undefined
 
-    const privilegedChannel = await privilegedCommandsManager.getPrivilegedChannel({
-      browserFamily: req.query.browserFamily,
-      isSpecBridge: false,
-      namespace: config.namespace,
-      scripts: allFilesToSend,
-      url: req.proxiedUrl,
-    })
-
     const iframeOptions = {
       superDomain,
       title: this.getTitle(test),
       scripts: JSON.stringify(allFilesToSend),
-      privilegedChannel,
+      privilegedChannel: null,
     }
 
     debug('iframe %s options %o', test, iframeOptions)
@@ -62,19 +52,11 @@ module.exports = {
 
     const origin = cors.getOrigin(req.proxiedUrl)
 
-    const privilegedChannel = await privilegedCommandsManager.getPrivilegedChannel({
-      browserFamily: req.query.browserFamily,
-      isSpecBridge: true,
-      namespace: config.namespace,
-      scripts: [],
-      url: req.proxiedUrl,
-    })
-
     const iframeOptions = {
       superDomain,
       title: `Cypress for ${origin}`,
       namespace: config.namespace,
-      privilegedChannel,
+      privilegedChannel: null,
     }
 
     debug('cross origin iframe with options %o', iframeOptions)
@@ -97,34 +79,7 @@ module.exports = {
       return this.prepareForBrowser(convertedSpec, config.projectRoot, config.namespace)
     }
 
-    const getSpecsHelper = async () => {
-      // grab all of the specs if this is ci
-      if (spec === '__all') {
-        debug('returning all specs')
-
-        const ctx = getCtx()
-
-        // In case the user clicked "run all specs" and deleted a spec in the list, we will
-        // only include specs we know to exist
-        const existingSpecs = new Set(ctx.project.specs.map(({ relative }) => relative))
-        const filteredSpecs = ctx.project.runAllSpecs.reduce((acc, relSpec) => {
-          if (existingSpecs.has(relSpec)) {
-            acc.push(convertSpecPath(relSpec))
-          }
-
-          return acc
-        }, [])
-
-        return filteredSpecs
-      }
-
-      debug('normalizing spec %o', { spec })
-
-      // normalize by sending in an array of 1
-      return [convertSpecPath(spec)]
-    }
-
-    return getSpecsHelper()
+    return
   },
 
   prepareForBrowser (filePath, projectRoot, namespace) {
