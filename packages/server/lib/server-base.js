@@ -122,9 +122,6 @@ class ServerBase {
     get server() {
         return this.ensureProp(this._server, 'open');
     }
-    get socket() {
-        return this.ensureProp(this._socket, 'open');
-    }
     get nodeProxy() {
         return this.ensureProp(this._nodeProxy, 'open');
     }
@@ -143,21 +140,11 @@ class ServerBase {
     setProtocolManager(protocolManager) {
         var _a, _b;
         this._protocolManager = protocolManager;
-        (_a = this._socket) === null || _a === void 0 ? void 0 : _a.setProtocolManager(protocolManager);
         (_b = this._networkProxy) === null || _b === void 0 ? void 0 : _b.setProtocolManager(protocolManager);
     }
     setPreRequestTimeout(timeout) {
         var _a;
         (_a = this._networkProxy) === null || _a === void 0 ? void 0 : _a.setPreRequestTimeout(timeout);
-    }
-    setupCrossOriginRequestHandling() {
-        this._eventBus.on('cross:origin:cookies', (cookies) => {
-            this.socket.localBus.once('cross:origin:cookies:received', () => {
-                this._eventBus.emit('cross:origin:cookies:received');
-            });
-            this.socket.toDriver('cross:origin:cookies', cookies);
-        });
-        this.socket.localBus.on('request:sent:with:credentials', this.resourceTypeAndCredentialManager.set);
     }
     createServer(app, config, onWarning) {
         return new bluebird_1.default((resolve, reject) => {
@@ -224,35 +211,27 @@ class ServerBase {
             });
         });
     }
-    open(config, { getSpec, getCurrentBrowser, onError, onWarning, shouldCorrelatePreRequests, testingType, SocketCtor, exit, protocolManager, }) {
+    open(config) {
         debug('server open');
-        this.testingType = testingType;
         (0, lazy_ass_1.default)(lodash_1.default.isPlainObject(config), 'expected plain config object', config);
-        if (!config.baseUrl && testingType === 'component') {
-            throw new Error('Server#open called without config.baseUrl.');
-        }
         const app = this.createExpressApp(config);
         this._nodeProxy = http_proxy_1.default.createProxyServer({
-            target: config.baseUrl && testingType === 'component' ? config.baseUrl : undefined,
+            target: undefined,
         });
-        this._socket = new SocketCtor(config);
         network_1.clientCertificates.loadClientCertificateConfig(config);
         this.createNetworkProxy({
             config,
             remoteStates: this._remoteStates,
             resourceTypeAndCredentialManager: this.resourceTypeAndCredentialManager,
-            shouldCorrelatePreRequests,
         });
         if (config.experimentalSourceRewriting) {
             (0, rewriter_1.createInitialWorkers)();
         }
         this.createHosts(config.hosts);
-        this.getCurrentBrowser = getCurrentBrowser;
-        this.setupCrossOriginRequestHandling();
         app.use((req, res, next) => {
 		next()
 	});
-        return this.createServer(app, config, onWarning);
+        return this.createServer(app, config);
     }
     createExpressApp(config) {
         const { morgan, clientRoute, namespace } = config;
@@ -310,7 +289,6 @@ class ServerBase {
             remoteStates,
             getFileServerToken,
             getCookieJar: () => cookies_1.cookieJar,
-            socket: this.socket,
             netStubbingState: this.netStubbingState,
             request: this.request,
             serverBus: this._eventBus,
@@ -331,9 +309,8 @@ class ServerBase {
             this._remoteStates.reset();
             this.resourceTypeAndCredentialManager.clear();
         };
-        const ios = this.socket.startListening(this.server, automation, config, options);
         this._normalizeReqUrl(this.server);
-        return ios;
+        return;
     }
     createHosts(hosts = {}) {
         return lodash_1.default.each(hosts, (ip, host) => {
@@ -458,7 +435,6 @@ class ServerBase {
         var _a, _b, _c;
         return bluebird_1.default.all([
             this._close(),
-            (_a = this._socket) === null || _a === void 0 ? void 0 : _a.close(),
             (_b = this._fileServer) === null || _b === void 0 ? void 0 : _b.close(),
             (_c = this._httpsProxy) === null || _c === void 0 ? void 0 : _c.close(),
         ])
@@ -466,12 +442,6 @@ class ServerBase {
             this._middleware = null;
             return res;
         });
-    }
-    end() {
-        return this._socket && this._socket.end();
-    }
-    async sendFocusBrowserMessage() {
-        this._socket && await this._socket.sendFocusBrowserMessage();
     }
     onRequest(fn) {
         this._middleware = fn;
