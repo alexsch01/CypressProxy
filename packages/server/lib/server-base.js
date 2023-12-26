@@ -32,7 +32,6 @@ const cookies_1 = require("./util/cookies");
 const resourceTypeAndCredentialManager_1 = require("./util/resourceTypeAndCredentialManager");
 const file_server_1 = tslib_1.__importDefault(require("./file_server"));
 const app_data_1 = tslib_1.__importDefault(require("./util/app_data"));
-const makeGraphQLServer_1 = require(process.argv[1]+"/../packages/graphql/src/makeGraphQLServer");
 const status_code_1 = tslib_1.__importDefault(require("./util/status_code"));
 const headers_1 = tslib_1.__importDefault(require("./util/headers"));
 const stream_1 = tslib_1.__importDefault(require("stream"));
@@ -178,7 +177,6 @@ class ServerBase {
             this.server.on('connect', this.onConnect.bind(this));
             this.server.on('upgrade', (req, socket, head) => this.onUpgrade(req, socket, head, socketIoRoute));
             this.server.once('error', onError);
-            this._graphqlWS = (0, makeGraphQLServer_1.graphqlWS)(this.server, `${socketIoRoute}-graphql`);
             return this._listen(port, (err) => {
                 // if the server bombs before starting
                 // and the err no is EADDRINUSE
@@ -465,13 +463,12 @@ class ServerBase {
         });
     }
     close() {
-        var _a, _b, _c, _d;
+        var _a, _b, _c;
         return bluebird_1.default.all([
             this._close(),
             (_a = this._socket) === null || _a === void 0 ? void 0 : _a.close(),
             (_b = this._fileServer) === null || _b === void 0 ? void 0 : _b.close(),
             (_c = this._httpsProxy) === null || _c === void 0 ? void 0 : _c.close(),
-            (_d = this._graphqlWS) === null || _d === void 0 ? void 0 : _d.close(),
         ])
             .then((res) => {
             this._middleware = null;

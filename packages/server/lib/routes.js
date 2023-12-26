@@ -11,7 +11,6 @@ const xhrs_1 = tslib_1.__importDefault(require("./controllers/xhrs"));
 const runner_1 = require("./controllers/runner");
 const iframes_1 = require("./controllers/iframes");
 const data_context_1 = require(process.argv[1]+"/../packages/data-context");
-const makeGraphQLServer_1 = require(process.argv[1]+"/../packages/graphql/src/makeGraphQLServer");
 const body_parser_1 = tslib_1.__importDefault(require("body-parser"));
 const path_1 = tslib_1.__importDefault(require("path"));
 const app_data_1 = tslib_1.__importDefault(require("./util/app_data"));
@@ -103,7 +102,6 @@ const createCommonRoutes = ({ config, networkProxy, testingType, getSpec, remote
             return (0, send_1.default)(req, pathToFile).pipe(res);
         });
     }
-    router.use(`/${namespace}/graphql/*`, makeGraphQLServer_1.graphQLHTTP);
     router.get(`/${namespace}/runner/*`, (req, res) => {
         runner_1.runner.handle(req, res);
     });

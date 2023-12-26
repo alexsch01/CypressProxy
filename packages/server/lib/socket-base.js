@@ -7,7 +7,6 @@ const debug_1 = tslib_1.__importDefault(require("debug"));
 const events_1 = tslib_1.__importDefault(require("events"));
 const lodash_1 = tslib_1.__importDefault(require("lodash"));
 const data_context_1 = require(process.argv[1]+"/../packages/data-context");
-const makeGraphQLServer_1 = require(process.argv[1]+"/../packages/graphql/src/makeGraphQLServer");
 const net_stubbing_1 = require(process.argv[1]+"/../packages/net-stubbing");
 const socketIo = tslib_1.__importStar(require(process.argv[1]+"/../packages/socket"));
 const cdp_socket_1 = require(process.argv[1]+"/../packages/socket/lib/cdp-socket");
@@ -458,11 +457,6 @@ class SocketBase {
                 }
                 callbacks.onSocketConnection(socket);
                 return;
-            });
-        });
-        this.getIos().forEach((io) => {
-            io === null || io === void 0 ? void 0 : io.of('/data-context').on('connection', (socket) => {
-                socket.on('graphql:request', makeGraphQLServer_1.handleGraphQLSocketRequest);
             });
         });
         return {
