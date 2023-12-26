@@ -28,7 +28,7 @@ const getSymlinkType = () => {
 }
 
 const isProduction = () => {
-  return process.env.CYPRESS_INTERNAL_ENV === 'production'
+  return false
 }
 
 const toHashName = (projectRoot) => {
@@ -87,11 +87,8 @@ module.exports = {
   path (...paths) {
     const { env } = process
 
-    la(check.unemptyString(env.CYPRESS_INTERNAL_ENV),
-      'expected CYPRESS_INTERNAL_ENV, found', env.CYPRESS_INTERNAL_ENV)
-
     // allow overriding the app_data folder
-    let folder = env.CYPRESS_CONFIG_ENV || env.CYPRESS_INTERNAL_ENV
+    let folder = env.CYPRESS_CONFIG_ENV || 'development'
 
     if (process.env.CYPRESS_INTERNAL_E2E_TESTING_SELF) {
       folder = `${folder}-e2e-test`

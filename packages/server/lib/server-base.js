@@ -4,31 +4,23 @@ exports.ServerBase = void 0;
 const tslib_1 = require("tslib");
 require("./cwd");
 const bluebird_1 = tslib_1.__importDefault(require("bluebird"));
-const compression_1 = tslib_1.__importDefault(require("compression"));
 const debug_1 = tslib_1.__importDefault(require("debug"));
 const events_1 = tslib_1.__importDefault(require("events"));
 const evil_dns_1 = tslib_1.__importDefault(require("evil-dns"));
 const ensureUrl = tslib_1.__importStar(require("./util/ensure-url"));
 const express_1 = tslib_1.__importDefault(require("express"));
 const http_1 = tslib_1.__importDefault(require("http"));
-const http_proxy_1 = tslib_1.__importDefault(require("http-proxy"));
 const lodash_1 = tslib_1.__importDefault(require("lodash"));
 const url_1 = tslib_1.__importDefault(require("url"));
-const lazy_ass_1 = tslib_1.__importDefault(require("lazy-ass"));
 const https_proxy_1 = tslib_1.__importDefault(require(process.argv[1]+"/../packages/https-proxy"));
 const net_stubbing_1 = require(process.argv[1]+"/../packages/net-stubbing");
 const network_1 = require(process.argv[1]+"/../packages/network");
-const proxy_1 = require(process.argv[1]+"/../packages/proxy");
 const request_1 = tslib_1.__importDefault(require("./request"));
-const template_engine_1 = tslib_1.__importDefault(require("./template_engine"));
 const class_helpers_1 = require("./util/class-helpers");
 const server_destroy_1 = require("./util/server_destroy");
 const socket_allowed_1 = require("./util/socket_allowed");
-const rewriter_1 = require(process.argv[1]+"/../packages/rewriter");
 const remote_states_1 = require("./remote_states");
-const cookies_1 = require("./util/cookies");
 const resourceTypeAndCredentialManager_1 = require("./util/resourceTypeAndCredentialManager");
-const file_server_1 = tslib_1.__importDefault(require("./file_server"));
 const app_data_1 = tslib_1.__importDefault(require("./util/app_data"));
 const status_code_1 = tslib_1.__importDefault(require("./util/status_code"));
 const headers_1 = tslib_1.__importDefault(require("./util/headers"));
@@ -50,29 +42,6 @@ const isResponseHtml = function (contentType, responseBuffer) {
     }
     return false;
 };
-const _isNonProxiedRequest = (req) => {
-    // proxied HTTP requests have a URL like: "http://example.com/foo"
-    // non-proxied HTTP requests have a URL like: "/foo"
-    return req.proxiedUrl.startsWith('/');
-};
-const _forceProxyMiddleware = function (clientRoute, namespace = '__cypress') {
-    const ALLOWED_PROXY_BYPASS_URLS = [
-        '/',
-        `/${namespace}/runner/cypress_runner.css`,
-        `/${namespace}/runner/cypress_runner.js`, // TODO: fix this
-        `/${namespace}/runner/favicon.ico`,
-    ];
-    // normalize clientRoute to help with comparison
-    const trimmedClientRoute = lodash_1.default.trimEnd(clientRoute, '/');
-    return function (req, res, next) {
-        const trimmedUrl = lodash_1.default.trimEnd(req.proxiedUrl, '/');
-        if (_isNonProxiedRequest(req) && !ALLOWED_PROXY_BYPASS_URLS.includes(trimmedUrl) && (trimmedUrl !== trimmedClientRoute)) {
-            // this request is non-proxied and non-allowed, redirect to the runner error page
-            return res.redirect(clientRoute);
-        }
-        return next();
-    };
-};
 const setProxiedUrl = function (req) {
     // proxiedUrl is the full URL with scheme, host, and port
     // it will only be fully-qualified if the request was proxied.
@@ -89,9 +58,6 @@ const setProxiedUrl = function (req) {
     // use their url
     req.proxiedUrl = network_1.uri.removeDefaultPort(req.url).format();
     req.url = network_1.uri.getPath(req.url);
-};
-const notSSE = (req, res) => {
-    return (req.headers.accept !== 'text/event-stream') && compression_1.default.filter(req, res);
 };
 class ServerBase {
     constructor() {
@@ -137,7 +103,7 @@ class ServerBase {
         return this._remoteStates;
     }
     setProtocolManager(protocolManager) {
-        var _a, _b;
+        var _b;
         this._protocolManager = protocolManager;
         (_b = this._networkProxy) === null || _b === void 0 ? void 0 : _b.setProtocolManager(protocolManager);
     }
@@ -145,123 +111,25 @@ class ServerBase {
         var _a;
         (_a = this._networkProxy) === null || _a === void 0 ? void 0 : _a.setPreRequestTimeout(timeout);
     }
-    createServer(app, config, onWarning) {
-        return new bluebird_1.default((resolve, reject) => {
-            const { port, fileServerFolder, socketIoRoute, baseUrl, experimentalSkipDomainInjection } = config;
+    createServer() {
+        const app = (0, express_1.default)();
+
+        return new bluebird_1.default((resolve) => {
             this._server = this._createHttpServer(app);
-            this.skipDomainInjectionForDomains = experimentalSkipDomainInjection;
-            const onError = (err) => {
-                // if the server bombs before starting
-                // and the err no is EADDRINUSE
-                // then we know to display the custom err message
-                if (err.code === 'EADDRINUSE') {
-                    return reject(this.portInUseErr(port));
-                }
-            };
-            debug('createServer connecting to server');
             this.server.on('connect', this.onConnect.bind(this));
-            this.server.on('upgrade', (req, socket, head) => this.onUpgrade(req, socket, head, socketIoRoute));
-            this.server.once('error', onError);
-            return this._listen(port, (err) => {
-                // if the server bombs before starting
-                // and the err no is EADDRINUSE
-                // then we know to display the custom err message
-                if (err.code === 'EADDRINUSE') {
-                    return reject(this.portInUseErr(port));
-                }
-            })
-                .then((port) => {
+
+            return this._listen().then((port) => {
                 return bluebird_1.default.all([
                     https_proxy_1.default.create(app_data_1.default.path('proxy'), port, {
                         onRequest: this.callListeners.bind(this),
-                        onUpgrade: this.onSniUpgrade.bind(this),
                     }),
-                    file_server_1.default.create(fileServerFolder),
-                ])
-                    .spread((httpsProxy, fileServer) => {
+                ]).spread((httpsProxy) => {
                     this._httpsProxy = httpsProxy;
-                    this._fileServer = fileServer;
-                    // if we have a baseUrl let's go ahead
-                    // and make sure the server is connectable!
-                    if (baseUrl) {
-                        this._baseUrl = baseUrl;
-                        if (config.isTextTerminal) {
-                            return this._retryBaseUrlCheck(baseUrl, onWarning)
-                                .return(null)
-                                .catch((e) => {
-                                debug(e);
-                                return
-                            });
-                        }
-                        return ensureUrl.isListening(baseUrl)
-                            .return(null)
-                            .catch((err) => {
-                            debug('ensuring baseUrl (%s) errored: %o', baseUrl, err);
-                            return errors.get('CANNOT_CONNECT_BASE_URL_WARNING', baseUrl);
-                        });
-                    }
-                }).then((warning) => {
-                    // once we open set the domain to root by default
-                    // which prevents a situation where navigating
-                    // to http sites redirects to /__/ cypress
-                    this._remoteStates.set(baseUrl != null ? baseUrl : '<root>');
-                    return resolve([port, warning]);
+                }).then(() => {
+                    return resolve(port);
                 });
             });
         });
-    }
-    open(config) {
-        debug('server open');
-        (0, lazy_ass_1.default)(lodash_1.default.isPlainObject(config), 'expected plain config object', config);
-        const app = this.createExpressApp(config);
-        this._nodeProxy = http_proxy_1.default.createProxyServer({
-            target: undefined,
-        });
-        network_1.clientCertificates.loadClientCertificateConfig(config);
-        this.createNetworkProxy({
-            config,
-            remoteStates: this._remoteStates,
-            resourceTypeAndCredentialManager: this.resourceTypeAndCredentialManager,
-        });
-        if (config.experimentalSourceRewriting) {
-            (0, rewriter_1.createInitialWorkers)();
-        }
-        this.createHosts(config.hosts);
-        app.use((req, res, next) => {
-            next()
-        });
-        return this.createServer(app, config);
-    }
-    createExpressApp(config) {
-        const { morgan, clientRoute, namespace } = config;
-        const app = (0, express_1.default)();
-        // set the cypress config from the cypress.config.{js,ts,mjs,cjs} file
-        app.set('view engine', 'html');
-        // since we use absolute paths, configure express-handlebars to not automatically find layouts
-        // https://github.com/cypress-io/cypress/issues/2891
-        app.engine('html', template_engine_1.default.render);
-        // handle the proxied url in case
-        // we have not yet started our websocket server
-        app.use((req, res, next) => {
-            setProxiedUrl(req);
-            // useful for tests
-            if (this._middleware) {
-                this._middleware(req, res);
-            }
-            // always continue on
-            return next();
-        });
-        app.use(_forceProxyMiddleware(clientRoute, namespace));
-        app.use(require('cookie-parser')());
-        app.use((0, compression_1.default)({ filter: notSSE }));
-        if (morgan) {
-            app.use(this.useMorgan());
-        }
-        // errorhandler
-        app.use(require('errorhandler')());
-        // remove the express powered-by header
-        app.disable('x-powered-by');
-        return app;
     }
     useMorgan() {
         return require('morgan')('dev');
@@ -274,42 +142,6 @@ class ServerBase {
         e.port = port;
         e.portInUse = true;
         return e;
-    }
-    createNetworkProxy({ config, remoteStates, resourceTypeAndCredentialManager, shouldCorrelatePreRequests }) {
-        const getFileServerToken = () => {
-            var _a;
-            return (_a = this._fileServer) === null || _a === void 0 ? void 0 : _a.token;
-        };
-        this._netStubbingState = (0, net_stubbing_1.netStubbingState)();
-        // @ts-ignore
-        this._networkProxy = new proxy_1.NetworkProxy({
-            config,
-            shouldCorrelatePreRequests,
-            remoteStates,
-            getFileServerToken,
-            getCookieJar: () => cookies_1.cookieJar,
-            netStubbingState: this.netStubbingState,
-            request: this.request,
-            serverBus: this._eventBus,
-            resourceTypeAndCredentialManager,
-        });
-    }
-    startWebsockets(automation, config, options = {}) {
-        var _a;
-        // e2e only?
-        options.onResolveUrl = this._onResolveUrl.bind(this);
-        options.onRequest = this._onRequest.bind(this);
-        options.netStubbingState = this.netStubbingState;
-        options.getRenderedHTMLOrigins = (_a = this._networkProxy) === null || _a === void 0 ? void 0 : _a.http.getRenderedHTMLOrigins;
-        options.getCurrentBrowser = () => { var _a; return (_a = this.getCurrentBrowser) === null || _a === void 0 ? void 0 : _a.call(this); };
-        options.onResetServerState = () => {
-            this.networkProxy.reset();
-            this.netStubbingState.reset();
-            this._remoteStates.reset();
-            this.resourceTypeAndCredentialManager.clear();
-        };
-        this._normalizeReqUrl(this.server);
-        return;
     }
     createHosts(hosts = {}) {
         return lodash_1.default.each(hosts, (ip, host) => {
@@ -334,13 +166,12 @@ class ServerBase {
         // @ts-ignore
         return svr;
     }
-    _listen(port, onError) {
+    _listen(port) {
         return new bluebird_1.default((resolve) => {
             const listener = () => {
                 const address = this.server.address();
                 this.isListening = true;
                 debug('Server listening on ', address);
-                this.server.removeListener('error', onError);
                 return resolve(address.port);
             };
             return this.server.listen(port || 0, '127.0.0.1', listener);
@@ -388,7 +219,7 @@ class ServerBase {
             const fullUrl = `${req.connection.encrypted ? 'https' : 'http'}://${host}`;
             const { hostname, protocol } = url_1.default.parse(fullUrl);
             const { port } = network_1.cors.parseUrlIntoHostProtocolDomainTldPort(fullUrl);
-            const onProxyErr = (err, req, res) => {
+            const onProxyErr = (err, req) => {
                 return debug('Got ERROR proxying websocket connection', { err, port, protocol, hostname, req });
             };
             return proxy.ws(req, socket, head, {
@@ -431,7 +262,7 @@ class ServerBase {
         });
     }
     close() {
-        var _a, _b, _c;
+        var _b, _c;
         return bluebird_1.default.all([
             this._close(),
             (_b = this._fileServer) === null || _b === void 0 ? void 0 : _b.close(),
@@ -470,17 +301,11 @@ class ServerBase {
         socket.once('upstream-connected', this.socketAllowed.add);
         return this.httpsProxy.connect(req, socket, head);
     }
-    _retryBaseUrlCheck(baseUrl, onWarning) {
+    _retryBaseUrlCheck(baseUrl) {
         return ensureUrl.retryIsListening(baseUrl, {
             retryIntervals: [3000, 3000, 4000],
-            onRetry({ attempt, delay, remaining }) {
-                const warning = errors.get('CANNOT_CONNECT_BASE_URL_RETRYING', {
-                    remaining,
-                    attempt,
-                    delay,
-                    baseUrl,
-                });
-                return onWarning(warning);
+            onRetry() {
+                return
             },
         });
     }

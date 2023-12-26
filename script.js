@@ -1,11 +1,9 @@
-process.env.CYPRESS_INTERNAL_ENV = 'development'
-
 const ServerBase = require('./packages/server/lib/server-base.js').ServerBase
 
 async function main() {
     const server = new ServerBase()
 
-    const [port, warning] = await server.open({ clientRoute: '/__/' })
+    const port = await server.createServer()
 
     console.log(port)
 }
