@@ -6,10 +6,8 @@ const bluebird_1 = tslib_1.__importDefault(require("bluebird"));
 const chalk_1 = tslib_1.__importDefault(require("chalk"));
 const debug_1 = tslib_1.__importDefault(require("debug"));
 const lodash_1 = tslib_1.__importDefault(require("lodash"));
-const errors_1 = require(process.argv[1]+"/../packages/errors");
 const rewriter_1 = require(process.argv[1]+"/../packages/rewriter");
 const telemetry_1 = require(process.argv[1]+"/../packages/telemetry");
-const error_middleware_1 = tslib_1.__importDefault(require("./error-middleware"));
 const request_middleware_1 = tslib_1.__importDefault(require("./request-middleware"));
 const response_middleware_1 = tslib_1.__importDefault(require("./response-middleware"));
 const buffers_1 = require("./util/buffers");
@@ -29,7 +27,6 @@ var HttpStages;
 exports.defaultMiddleware = {
     [HttpStages.IncomingRequest]: request_middleware_1.default,
     [HttpStages.IncomingResponse]: response_middleware_1.default,
-    [HttpStages.Error]: error_middleware_1.default,
 };
 const READONLY_MIDDLEWARE_KEYS = [
     'buffers',
@@ -131,7 +128,6 @@ function _runStage(type, ctx, onError) {
             }
             catch (err) {
                 err.message = `Internal error while proxying "${ctx.req.method} ${ctx.req.proxiedUrl}" in ${middlewareName}:\n${err.message}`;
-                errors_1.errorUtils.logError(err);
                 fullCtx.onError(err);
             }
         });

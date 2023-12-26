@@ -19,7 +19,6 @@ const https_proxy_1 = tslib_1.__importDefault(require(process.argv[1]+"/../packa
 const net_stubbing_1 = require(process.argv[1]+"/../packages/net-stubbing");
 const network_1 = require(process.argv[1]+"/../packages/network");
 const proxy_1 = require(process.argv[1]+"/../packages/proxy");
-const errors = tslib_1.__importStar(require("./errors"));
 const request_1 = tslib_1.__importDefault(require("./request"));
 const template_engine_1 = tslib_1.__importDefault(require("./template_engine"));
 const class_helpers_1 = require("./util/class-helpers");
@@ -191,7 +190,7 @@ class ServerBase {
                                 .return(null)
                                 .catch((e) => {
                                 debug(e);
-                                return reject(errors.get('CANNOT_CONNECT_BASE_URL'));
+                                return
                             });
                         }
                         return ensureUrl.isListening(baseUrl)

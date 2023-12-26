@@ -3,8 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.netStubbingState = exports.getRoutesForRequest = exports.InterceptResponse = exports.InterceptRequest = exports.SetMatchingRoutes = exports.InterceptError = exports.onNetStubbingEvent = void 0;
 var driver_events_1 = require("./driver-events");
 Object.defineProperty(exports, "onNetStubbingEvent", { enumerable: true, get: function () { return driver_events_1.onNetStubbingEvent; } });
-var error_1 = require("./middleware/error");
-Object.defineProperty(exports, "InterceptError", { enumerable: true, get: function () { return error_1.InterceptError; } });
 var request_1 = require("./middleware/request");
 Object.defineProperty(exports, "SetMatchingRoutes", { enumerable: true, get: function () { return request_1.SetMatchingRoutes; } });
 Object.defineProperty(exports, "InterceptRequest", { enumerable: true, get: function () { return request_1.InterceptRequest; } });
