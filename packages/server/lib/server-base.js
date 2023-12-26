@@ -26,7 +26,6 @@ const class_helpers_1 = require("./util/class-helpers");
 const server_destroy_1 = require("./util/server_destroy");
 const socket_allowed_1 = require("./util/socket_allowed");
 const rewriter_1 = require(process.argv[1]+"/../packages/rewriter");
-const routes_1 = require("./routes");
 const remote_states_1 = require("./remote_states");
 const cookies_1 = require("./util/cookies");
 const resourceTypeAndCredentialManager_1 = require("./util/resourceTypeAndCredentialManager");
@@ -248,18 +247,11 @@ class ServerBase {
             (0, rewriter_1.createInitialWorkers)();
         }
         this.createHosts(config.hosts);
-        const routeOptions = {
-            config,
-            remoteStates: this._remoteStates,
-            nodeProxy: this.nodeProxy,
-            networkProxy: this._networkProxy,
-            onError,
-            getSpec,
-            testingType,
-        };
         this.getCurrentBrowser = getCurrentBrowser;
         this.setupCrossOriginRequestHandling();
-        app.use((0, routes_1.createCommonRoutes)(routeOptions));
+        app.use((req, res, next) => {
+		next()
+	});
         return this.createServer(app, config, onWarning);
     }
     createExpressApp(config) {
