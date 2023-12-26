@@ -2,8 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ensureProp = void 0;
 const propertyGetterNameRe = /\.get\s(.+?)\s/;
-class AnyClass {
-}
+
 function ensureProp(prop, methodSetter) {
     if (!prop) {
         const obj = {};
