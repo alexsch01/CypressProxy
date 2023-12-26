@@ -228,8 +228,8 @@ class ServerBase {
         }
         this.createHosts(config.hosts);
         app.use((req, res, next) => {
-		next()
-	});
+            next()
+        });
         return this.createServer(app, config);
     }
     createExpressApp(config) {
