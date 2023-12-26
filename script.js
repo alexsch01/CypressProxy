@@ -1,7 +1,7 @@
 process.env.CYPRESS_INTERNAL_ENV = 'development'
 
 const ServerBase = require('./packages/server/lib/server-base.js').ServerBase
-const SocketE2E = require('./packages/server/lib/socket-e2e.js').SocketE2E
+const SocketBase = require('./packages/server/lib/socket-base.js').SocketBase
 
 async function main() {
     const server = new ServerBase()
@@ -14,7 +14,7 @@ async function main() {
       onWarning: () => {},
       shouldCorrelatePreRequests: () => false,
       testingType: 'e2e',
-      SocketCtor: SocketE2E,
+      SocketCtor: SocketBase,
     })
 
     console.log(port)
