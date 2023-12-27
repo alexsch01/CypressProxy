@@ -43,10 +43,9 @@ class ServerBase {
     _createHttpServer(app) {
         const svr = http_1.default.createServer(network_1.httpUtils.lenientOptions, app);
         (0, server_destroy_1.allowDestroy)(svr);
-        // @ts-ignore
         return svr;
     }
-    _listen(port) {
+    _listen() {
         return new bluebird_1.default((resolve) => {
             const listener = () => {
                 const address = this._server.address();
@@ -54,7 +53,7 @@ class ServerBase {
                 debug('Server listening on ', address);
                 return resolve(address.port);
             };
-            return this._server.listen(port || 0, '127.0.0.1', listener);
+            return this._server.listen(0, '127.0.0.1', listener);
         });
     }
     _callRequestListeners(server, listeners, req, res) {
